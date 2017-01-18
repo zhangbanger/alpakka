@@ -5,6 +5,7 @@ lazy val alpakka = project
   .aggregate(amqp, cassandra, docs, files, mqtt)
   .settings(
     unidocSettings,
+    target in sbtunidoc.Plugin.UnidocKeys.unidoc in ScalaUnidoc := crossTarget.value / "api",
     deployRsyncArtifact := (sbtunidoc.Plugin.UnidocKeys.unidoc in Compile).value.head -> s"www/api/alpakka/${version.value}"
   )
 
