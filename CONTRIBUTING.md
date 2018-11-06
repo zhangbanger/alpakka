@@ -29,7 +29,13 @@ This is the process for committing code into master.
 
 1. After the review you should fix the issues (review comments, CI failures) by pushing a new commit for new review, iterating until the reviewers give their thumbs up and CI tests pass.
 
-1. If the branch merge conflicts with its target, rebase your branch onto the target branch.
+1. If the branch merge conflicts with its target, rebase your branch onto the target branch. In most cases this can be done by following the following steps:
+    ```sh
+    git fetch origin master:master # fetch the latest changes from upstream master to local master
+    git rebase master              # replay all commits from the branch on top of master
+    ```
+
+    If the replayed commits do not apply cleanly, fixup the merge conflicts, and continue the rebase with `git rebase --continue`.
 
 In case of questions about the contribution process or for discussion of specific issues please visit the [akka/dev gitter chat](https://gitter.im/akka/dev).
 
