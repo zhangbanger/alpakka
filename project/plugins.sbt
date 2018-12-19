@@ -1,6 +1,6 @@
 addSbtPlugin("de.heikoseeberger" % "sbt-header" % "5.0.0")
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.4.0")
-addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.1.0")
+addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.0.0")
 addSbtPlugin("com.lightbend.paradox" % "sbt-paradox" % "0.4.3")
 addSbtPlugin("com.lightbend.akka" % "sbt-paradox-akka" % "0.12")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")

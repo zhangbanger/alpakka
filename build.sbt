@@ -269,10 +269,6 @@ def alpakkaProject(projectId: String, moduleName: String, additionalSettings: sb
     .enablePlugins(AutomateHeaderPlugin)
     .settings(
       name := s"akka-stream-alpakka-$projectId",
-      AutomaticModuleName.settings(s"akka.stream.alpakka.$moduleName"),
-      mimaPreviousArtifacts := Set(
-        organization.value %% name.value % previousStableVersion.value
-          .getOrElse(throw new Error("Unable to determine previous version"))
-      )
+      AutomaticModuleName.settings(s"akka.stream.alpakka.$moduleName")
     )
     .settings(additionalSettings: _*)
