@@ -233,18 +233,6 @@ lazy val docs = project
     publish / skip := true,
     whitesourceIgnore := true,
     makeSite := makeSite.dependsOn(LocalRootProject / ScalaUnidoc / doc).value,
-    makeSite := {
-      (Symlink / symlinkCreate).value
-      makeSite.value
-    },
-    Symlink / symlinkPaths ++= Seq(isSnapshot.value).flatMap {
-      case false =>
-        Seq(
-          "api/alpakka/current" -> s"api/alpakka/${version.value}",
-          "docs/alpakka/current" -> s"docs/alpakka/${version.value}",
-        )
-      case true => Seq.empty
-    }.toMap,
     Preprocess / siteSubdirName := s"api/alpakka/${if (isSnapshot.value) "snapshot" else version.value}",
     Preprocess / sourceDirectory := (LocalRootProject / ScalaUnidoc / unidoc / target).value,
     Preprocess / preprocessRules := Seq(
