@@ -132,7 +132,7 @@ object MessageAction {
  */
 final class SqsPublishResult[T <: SdkPojo] @InternalApi private[sqs] (
     val responseMetadata: SqsResponseMetadata,
-    val metadata: T,
+    val metadata: T
 ) {
 
   /** Java API */
