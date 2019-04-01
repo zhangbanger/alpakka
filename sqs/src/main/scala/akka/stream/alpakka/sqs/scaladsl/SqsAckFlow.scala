@@ -31,7 +31,7 @@ object SqsAckFlow {
    */
   def apply(queueUrl: String, settings: SqsAckSettings = SqsAckSettings.Defaults)(
       implicit sqsClient: SqsAsyncClient
-  ): Flow[MessageAction, SqsAckResult[SdkPojo], NotUsed] =
+  ): Flow[MessageAction, SqsAckResult[SqsResponse], NotUsed] =
     Flow[MessageAction]
       .mapAsync(settings.maxInFlight) {
         case messageAction: MessageAction.Delete =>
@@ -45,7 +45,7 @@ object SqsAckFlow {
           sqsClient
             .deleteMessage(request)
             .toScala
-            .map(resp => new SqsAckResult[SdkPojo](resp.responseMetadata(), resp, messageAction))(
+            .map(resp => new SqsAckResult(resp.responseMetadata(), resp, messageAction))(
               sameThreadExecutionContext
             )
 
@@ -61,12 +61,12 @@ object SqsAckFlow {
           sqsClient
             .changeMessageVisibility(request)
             .toScala
-            .map(resp => new SqsAckResult[SdkPojo](resp.responseMetadata(), resp, messageAction))(
+            .map(resp => new SqsAckResult(resp.responseMetadata(), resp, messageAction))(
               sameThreadExecutionContext
             )
 
         case messageAction: MessageAction.Ignore =>
-          Future.successful(new SqsAckResult[SdkPojo](messageAction))
+          Future.successful(new SqsAckResult(messageAction))
       }
 
   /**
@@ -92,7 +92,7 @@ object SqsAckFlow {
 
         p.out(0) ~> mapDelete ~> groupedDelete(queueUrl, settings) ~> merge
         p.out(1) ~> mapChangeMessageVisibility ~> groupedChangeMessageVisibility(queueUrl, settings) ~> merge
-        p.out(2) ~> Flow[MessageAction].map(x => new SqsAckResult[SdkPojo](x)) ~> merge
+        p.out(2) ~> Flow[MessageAction].map(x => new SqsAckResult(x)) ~> merge
 
         FlowShape(p.in, merge.out)
       }
@@ -100,7 +100,7 @@ object SqsAckFlow {
 
   private def groupedDelete(queueUrl: String, settings: SqsAckGroupedSettings)(
       implicit sqsClient: SqsAsyncClient
-  ): Flow[MessageAction.Delete, SqsAckResult[SdkPojo], NotUsed] =
+  ): Flow[MessageAction.Delete, SqsAckResult[DeleteMessageBatchResultEntry], NotUsed] =
     Flow[MessageAction.Delete]
       .groupedWithin(settings.maxBatchSize, settings.maxBatchWait)
       .map { actions =>
@@ -131,7 +131,7 @@ object SqsAckFlow {
                 actions.zipWithIndex.map {
                   case (a, i) =>
                     val metadata = metadataEntries(i)
-                    new SqsAckResult[SdkPojo](responseMetadata, metadata, a)
+                    new SqsAckResult(responseMetadata, metadata, a)
                 }
               case resp =>
                 val numberOfMessages = request.entries().size()
@@ -152,7 +152,7 @@ object SqsAckFlow {
 
   private def groupedChangeMessageVisibility(queueUrl: String, settings: SqsAckGroupedSettings)(
       implicit sqsClient: SqsAsyncClient
-  ): Flow[MessageAction.ChangeMessageVisibility, SqsAckResult[SdkPojo], NotUsed] =
+  ): Flow[MessageAction.ChangeMessageVisibility, SqsAckResult[ChangeMessageVisibilityBatchResultEntry], NotUsed] =
     Flow[MessageAction.ChangeMessageVisibility]
       .groupedWithin(settings.maxBatchSize, settings.maxBatchWait)
       .map { actions =>
@@ -184,7 +184,7 @@ object SqsAckFlow {
                 actions.zipWithIndex.map {
                   case (a, i) =>
                     val metadata = metadataEntries(i)
-                    new SqsAckResult[SdkPojo](responseMetadata, metadata, a)
+                    new SqsAckResult(responseMetadata, metadata, a)
                 }
               case resp =>
                 val numberOfMessages = request.entries().size()
