@@ -5,6 +5,7 @@
 package akka.stream.alpakka.sqs.javadsl
 
 import akka.NotUsed
+import akka.annotation.ApiMayChange
 import akka.stream.alpakka.sqs._
 import akka.stream.javadsl.Flow
 import software.amazon.awssdk.core.SdkPojo
@@ -14,6 +15,7 @@ import software.amazon.awssdk.services.sqs.model.SqsResponse
 /**
  * Java API to create acknowledging SQS flows.
  */
+@ApiMayChange
 object SqsAckFlow {
 
   /**

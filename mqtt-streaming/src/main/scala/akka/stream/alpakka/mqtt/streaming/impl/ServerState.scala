@@ -335,7 +335,7 @@ import scala.util.{Failure, Success}
       extends Event
   final case class SubscribeReceivedFromRemote(subscribe: Subscribe, local: Promise[Publisher.ForwardSubscribe.type])
       extends Event
-  final case class Subscribed(subscribe: Subscribe) extends Event
+  final case class Subscribed(subscribe: Subscribe, remote: Promise[Publisher.ForwardSubAck.type]) extends Event
   final case class PublishReceivedFromRemote(publish: Publish, local: Promise[Consumer.ForwardPublish.type])
       extends Event
   final case class ConsumerFree(topicName: String) extends Event
@@ -390,6 +390,9 @@ import scala.util.{Failure, Success}
             data.stash.foreach(context.self.tell)
             timer.cancel(ReceiveConnAck)
 
+            data.activeProducers.values
+              .foreach(_ ! Producer.ReceiveConnect)
+
             clientConnected(
               ConnAckReplied(
                 data.connect,
@@ -411,6 +414,9 @@ import scala.util.{Failure, Success}
             throw ClientConnectionFailed
           case (_, ClientConnection.ConnectionLost) =>
             throw ClientConnectionFailed
+          case (_, PublishReceivedLocally(publish, _))
+              if !data.publishers.exists(Topics.filter(_, publish.topicName)) =>
+            Behaviors.same
           case (_, e) =>
             clientConnect(data.copy(stash = data.stash :+ e))
         }
@@ -456,7 +462,7 @@ import scala.util.{Failure, Success}
       Behaviors
         .receivePartial[Event] {
           case (context, SubscribeReceivedFromRemote(subscribe, local)) =>
-            val subscribed = Promise[Done]
+            val subscribed = Promise[Promise[Publisher.ForwardSubAck.type]]
             context.watch(
               context.spawnAnonymous(
                 Publisher(data.connect.clientId,
@@ -467,9 +473,11 @@ import scala.util.{Failure, Success}
                           data.settings)
               )
             )
-            subscribed.future.foreach(_ => context.self ! Subscribed(subscribe))(context.executionContext)
+            subscribed.future.foreach(remote => context.self ! Subscribed(subscribe, remote))(context.executionContext)
             clientConnected(data)
-          case (_, Subscribed(subscribe)) =>
+          case (_, Subscribed(subscribe, remote)) =>
+            remote.success(Publisher.ForwardSubAck)
+
             clientConnected(
               data.copy(
                 publishers = data.publishers ++ subscribe.topicFilters.map(_._1)
@@ -489,7 +497,7 @@ import scala.util.{Failure, Success}
             )
             unsubscribed.future.foreach(_ => context.self ! Unsubscribed(unsubscribe))(context.executionContext)
             clientConnected(data)
-          case (context, Unsubscribed(unsubscribe)) =>
+          case (_, Unsubscribed(unsubscribe)) =>
             clientConnected(data.copy(publishers = data.publishers -- unsubscribe.topicFilters))
           case (_, PublishReceivedFromRemote(publish, local))
               if (publish.flags & ControlPacketFlags.QoSReserved).underlying == 0 =>
@@ -729,6 +737,9 @@ import scala.util.{Failure, Success}
             throw ClientConnectionFailed
           case (_, ConnectionLost) =>
             Behavior.same // We know... we are disconnected...
+          case (_, PublishReceivedLocally(publish, _))
+              if !data.publishers.exists(Topics.filter(_, publish.topicName)) =>
+            Behaviors.same
           case (_, e) =>
             clientDisconnected(data.copy(stash = data.stash :+ e))
         }
@@ -757,7 +768,7 @@ import scala.util.{Failure, Success}
   def apply(clientId: String,
             packetId: PacketId,
             local: Promise[ForwardSubscribe.type],
-            subscribed: Promise[Done],
+            subscribed: Promise[Promise[ForwardSubAck.type]],
             packetRouter: ActorRef[RemotePacketRouter.Request[Event]],
             settings: MqttSessionSettings): Behavior[Event] =
     preparePublisher(Start(Some(clientId), packetId, local, subscribed, packetRouter, settings))
@@ -766,19 +777,19 @@ import scala.util.{Failure, Success}
 
   sealed abstract class Data(val clientId: Some[String],
                              val packetId: PacketId,
-                             val subscribed: Promise[Done],
+                             val subscribed: Promise[Promise[ForwardSubAck.type]],
                              val packetRouter: ActorRef[RemotePacketRouter.Request[Event]],
                              val settings: MqttSessionSettings)
   final case class Start(override val clientId: Some[String],
                          override val packetId: PacketId,
                          local: Promise[ForwardSubscribe.type],
-                         override val subscribed: Promise[Done],
+                         override val subscribed: Promise[Promise[ForwardSubAck.type]],
                          override val packetRouter: ActorRef[RemotePacketRouter.Request[Event]],
                          override val settings: MqttSessionSettings)
       extends Data(clientId, packetId, subscribed, packetRouter, settings)
   final case class ServerSubscribe(override val clientId: Some[String],
                                    override val packetId: PacketId,
-                                   override val subscribed: Promise[Done],
+                                   override val subscribed: Promise[Promise[ForwardSubAck.type]],
                                    override val packetRouter: ActorRef[RemotePacketRouter.Request[Event]],
                                    override val settings: MqttSessionSettings)
       extends Data(clientId, packetId, subscribed, packetRouter, settings)
@@ -812,6 +823,7 @@ import scala.util.{Failure, Success}
         )
       case UnobtainablePacketId =>
         data.local.failure(SubscribeFailed)
+        data.subscribed.failure(SubscribeFailed)
         throw SubscribeFailed
     }
 
@@ -824,10 +836,10 @@ import scala.util.{Failure, Success}
     Behaviors
       .receiveMessagePartial[Event] {
         case SubAckReceivedLocally(remote) =>
-          remote.success(ForwardSubAck)
-          data.subscribed.success(Done)
+          data.subscribed.success(remote)
           Behaviors.stopped
         case ReceiveSubAckTimeout =>
+          data.subscribed.failure(SubscribeFailed)
           throw SubscribeFailed
       }
       .receiveSignal {
@@ -910,6 +922,7 @@ import scala.util.{Failure, Success}
         )
       case UnobtainablePacketId =>
         data.local.failure(UnsubscribeFailed)
+        data.unsubscribed.failure(UnsubscribeFailed)
         throw UnsubscribeFailed
     }
   }
@@ -925,6 +938,7 @@ import scala.util.{Failure, Success}
           data.unsubscribed.success(Done)
           Behaviors.stopped
         case ReceiveUnsubAckTimeout =>
+          data.unsubscribed.failure(UnsubscribeFailed)
           throw UnsubscribeFailed
       }
       .receiveSignal {
