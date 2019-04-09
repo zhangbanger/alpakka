@@ -68,6 +68,10 @@ object Proxy {
     apply(host, port, scheme)
 }
 
+// TODO: Java api, copy method from Proxy above..
+case class ForwardProxyCredentials(username: String, password: String)
+case class ForwardProxy(host: String, port: Int, credentials: Option[ForwardProxyCredentials])
+
 sealed abstract class ApiVersion
 object ApiVersion {
   sealed abstract class ListBucketVersion1 extends ApiVersion
@@ -83,6 +87,7 @@ object ApiVersion {
   def getListBucketVersion2: ListBucketVersion2 = ListBucketVersion2
 }
 
+// TODO: java api for forwardProxy
 final class S3Settings private (
     val bufferType: BufferType,
     val proxy: Option[Proxy],
@@ -90,7 +95,8 @@ final class S3Settings private (
     val s3RegionProvider: AwsRegionProvider,
     val pathStyleAccess: Boolean,
     val endpointUrl: Option[String],
-    val listBucketApiVersion: ApiVersion
+    val listBucketApiVersion: ApiVersion,
+    val forwardProxy: Option[ForwardProxy]
 ) {
 
   /** Java API */
@@ -124,6 +130,8 @@ final class S3Settings private (
   def withEndpointUrl(value: String): S3Settings = copy(endpointUrl = Option(value))
   def withListBucketApiVersion(value: ApiVersion): S3Settings =
     copy(listBucketApiVersion = value)
+  def withForwardProxy(value: ForwardProxy): S3Settings =
+    copy(forwardProxy = Option(value))
 
   private def copy(
       bufferType: BufferType = bufferType,
@@ -132,7 +140,8 @@ final class S3Settings private (
       s3RegionProvider: AwsRegionProvider = s3RegionProvider,
       pathStyleAccess: Boolean = pathStyleAccess,
       endpointUrl: Option[String] = endpointUrl,
-      listBucketApiVersion: ApiVersion = listBucketApiVersion
+      listBucketApiVersion: ApiVersion = listBucketApiVersion,
+      forwardProxy: Option[ForwardProxy] = forwardProxy
   ): S3Settings = new S3Settings(
     bufferType = bufferType,
     proxy = proxy,
@@ -140,7 +149,8 @@ final class S3Settings private (
     s3RegionProvider = s3RegionProvider,
     pathStyleAccess = pathStyleAccess,
     endpointUrl = endpointUrl,
-    listBucketApiVersion = listBucketApiVersion
+    listBucketApiVersion = listBucketApiVersion,
+    forwardProxy = forwardProxy
   )
 
   override def toString =
@@ -162,7 +172,8 @@ final class S3Settings private (
       Objects.equals(this.s3RegionProvider, that.s3RegionProvider) &&
       Objects.equals(this.pathStyleAccess, that.pathStyleAccess) &&
       Objects.equals(this.endpointUrl, that.endpointUrl) &&
-      Objects.equals(this.listBucketApiVersion, that.listBucketApiVersion)
+      Objects.equals(this.listBucketApiVersion, that.listBucketApiVersion) &&
+      Objects.equals(this.forwardProxy, that.forwardProxy)
     case _ => false
   }
 
@@ -173,7 +184,8 @@ final class S3Settings private (
                  s3RegionProvider,
                  Boolean.box(pathStyleAccess),
                  endpointUrl,
-                 listBucketApiVersion)
+                 listBucketApiVersion,
+                 forwardProxy)
 }
 
 object S3Settings {
@@ -276,7 +288,8 @@ object S3Settings {
       s3RegionProvider = regionProvider,
       pathStyleAccess = pathStyleAccess,
       endpointUrl = endpointUrl,
-      listBucketApiVersion = apiVersion
+      listBucketApiVersion = apiVersion,
+      forwardProxy = None // TODO: load from config, see akka.http.client.proxy from https://doc.akka.io/docs/akka-http/current/client-side/client-transport.html
     )
   }
 
@@ -293,7 +306,8 @@ object S3Settings {
       s3RegionProvider: AwsRegionProvider,
       pathStyleAccess: Boolean,
       endpointUrl: Option[String],
-      listBucketApiVersion: ApiVersion
+      listBucketApiVersion: ApiVersion,
+      forwardProxy: Option[ForwardProxy]
   ): S3Settings = new S3Settings(
     bufferType,
     proxy,
@@ -301,7 +315,8 @@ object S3Settings {
     s3RegionProvider,
     pathStyleAccess,
     endpointUrl,
-    listBucketApiVersion
+    listBucketApiVersion,
+    forwardProxy
   )
 
   /** Java API */
@@ -312,7 +327,8 @@ object S3Settings {
       s3RegionProvider: AwsRegionProvider,
       pathStyleAccess: Boolean,
       endpointUrl: java.util.Optional[String],
-      listBucketApiVersion: ApiVersion
+      listBucketApiVersion: ApiVersion,
+      forwardProxy: java.util.Optional[ForwardProxy]
   ): S3Settings = apply(
     bufferType,
     proxy.asScala,
@@ -320,7 +336,8 @@ object S3Settings {
     s3RegionProvider,
     pathStyleAccess,
     endpointUrl.asScala,
-    listBucketApiVersion
+    listBucketApiVersion,
+    forwardProxy.asScala
   )
 
   /**
