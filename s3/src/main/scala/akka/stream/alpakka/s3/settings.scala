@@ -68,9 +68,98 @@ object Proxy {
     apply(host, port, scheme)
 }
 
-// TODO: Java api, copy method from Proxy above..
-case class ForwardProxyCredentials(username: String, password: String)
-case class ForwardProxy(host: String, port: Int, credentials: Option[ForwardProxyCredentials])
+final class ForwardProxyCredentials private (val username: String, val password: String) {
+
+  /** Java API */
+  def getUsername : String = username
+
+  /** Java API */
+  def getPassword : String = password
+
+  def withUsername(username : String) = copy(username = username)
+  def withPassword(password : String) = copy(password = password)
+
+  private def copy(username : String = username, password: String = password) =
+    new ForwardProxyCredentials(username, password)
+
+  override def toString =
+    "ForwardProxyCredentials(" +
+    s"username=$username," +
+    s"password=$password" +
+    ")"
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ForwardProxyCredentials =>
+      Objects.equals(this.username, that.username) &&
+      Objects.equals(this.password, that.password)
+    case _ => false
+  }
+
+  override def hashCode(): Int =
+    Objects.hash(username, password)
+
+}
+
+object ForwardProxyCredentials {
+
+  /** Scala API */
+  def apply(username: String, password: String): ForwardProxyCredentials =
+    new ForwardProxyCredentials(username, password)
+
+  /** Java API */
+  def create(username: String, password: String): ForwardProxyCredentials =
+    apply(username, password)
+
+}
+
+final class ForwardProxy private (val host: String, val port: Int, val credentials: Option[ForwardProxyCredentials]) {
+
+  /** Java API */
+  def getHost : String = host
+
+  /** Java API */
+  def getPort : Int = port
+
+  /** Java API */
+  def getCredentials : Option[ForwardProxyCredentials] = credentials
+
+  def withHost(host : String) = copy(host = host)
+  def withPort(port : Int) = copy(port = port)
+  def withCredentials(credentials: ForwardProxyCredentials) = copy(credentials = Option(credentials))
+
+  private def copy(host : String = host, port : Int = port, credentials: Option[ForwardProxyCredentials] = credentials) =
+    new ForwardProxy(host, port, credentials)
+
+  override def toString =
+    "ForwardProxy(" +
+    s"host=$host," +
+    s"port=$port," +
+    s"credentials=$credentials"
+  ")"
+
+  override def equals(other: Any): Boolean = other match {
+    case that: ForwardProxy =>
+      Objects.equals(this.host, that.host) &&
+      Objects.equals(this.port, that.port) &&
+      Objects.equals(this.credentials, that.credentials)
+    case _ => false
+  }
+
+  override def hashCode(): Int =
+    Objects.hash(host, port, credentials)
+}
+
+object ForwardProxy {
+
+  /** Scala API */
+  def apply(host: String, port: Int, credentials: Option[ForwardProxyCredentials]) =
+    new ForwardProxy(host, port, credentials)
+
+  /** Java API */
+  def create(host: String, port: Int, credentials: Option[ForwardProxyCredentials]) =
+    apply(host, port, credentials)
+
+}
 
 sealed abstract class ApiVersion
 object ApiVersion {
@@ -87,7 +176,6 @@ object ApiVersion {
   def getListBucketVersion2: ListBucketVersion2 = ListBucketVersion2
 }
 
-// TODO: java api for forwardProxy
 final class S3Settings private (
     val bufferType: BufferType,
     val proxy: Option[Proxy],
@@ -119,6 +207,9 @@ final class S3Settings private (
 
   /** Java API */
   def getListBucketApiVersion: ApiVersion = listBucketApiVersion
+
+  /** Java API */
+  def getForwardProxy: java.util.Optional[ForwardProxy] = forwardProxy.asJava
 
   def withBufferType(value: BufferType): S3Settings = copy(bufferType = value)
   def withProxy(value: Proxy): S3Settings = copy(proxy = Option(value))
@@ -162,7 +253,8 @@ final class S3Settings private (
     s"pathStyleAccess=$pathStyleAccess," +
     s"endpointUrl=$endpointUrl," +
     s"listBucketApiVersion=$listBucketApiVersion" +
-    ")"
+    s"forwardProxy=$forwardProxy"
+  ")"
 
   override def equals(other: Any): Boolean = other match {
     case that: S3Settings =>
