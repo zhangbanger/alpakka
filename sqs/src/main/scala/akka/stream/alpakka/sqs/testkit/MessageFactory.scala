@@ -3,35 +3,44 @@
  */
 
 package akka.stream.alpakka.sqs.testkit
-import java.util.Optional
-
-import akka.stream.alpakka.sqs.{MessageAction, SqsAckResult, SqsPublishResult}
-import software.amazon.awssdk.core.SdkPojo
-import software.amazon.awssdk.services.sqs.model.{SendMessageRequest, SqsResponse, SqsResponseMetadata}
-
-import scala.compat.java8.OptionConverters._
+import akka.stream.alpakka.sqs.{MessageAction, PublishResult, PublishResultEntry}
+import akka.stream.alpakka.sqs.SqsAckResult.{ChangeMessageVisibilityResult, DeleteResult}
+import akka.stream.alpakka.sqs.SqsAckResultEntry.{ChangeMessageVisibilityResultEntry, DeleteResultEntry}
+import software.amazon.awssdk.awscore.DefaultAwsResponseMetadata
+import software.amazon.awssdk.services.sqs.model._
 
 /**
  * Message factory class for testing purposes
  */
 object MessageFactory {
 
-  def createSqsPublishResult[T <: SdkPojo](responseMetadata: SqsResponseMetadata,
-                                           metadata: T,
-                                           request: SendMessageRequest): SqsPublishResult[T] =
-    new SqsPublishResult(responseMetadata, metadata, request)
+  val EmptySqsResponseMetadata: SqsResponseMetadata =
+    SqsResponseMetadata.create(DefaultAwsResponseMetadata.create(java.util.Collections.emptyMap()))
 
-  def createSqsAckResult[T <: SdkPojo](responseMetadata: Option[SqsResponseMetadata],
-                                       metadata: Option[T],
-                                       messageAction: MessageAction): SqsAckResult[T] =
-    new SqsAckResult(responseMetadata, metadata, messageAction)
+  def createPublishResult(request: SendMessageRequest, response: SendMessageResponse): PublishResult =
+    new PublishResult(request, response)
 
-  /** Java API */
-  def createSqsAckResult[T <: SqsResponse](responseMetadata: Optional[SqsResponseMetadata],
-                                           metadata: Optional[T],
-                                           messageAction: MessageAction): SqsAckResult[T] =
-    new SqsAckResult(responseMetadata.asScala, metadata.asScala, messageAction)
+  def createPublishResultEntry(request: SendMessageRequest,
+                               result: SendMessageBatchResultEntry,
+                               responseMetadata: SqsResponseMetadata = EmptySqsResponseMetadata): PublishResultEntry =
+    new PublishResultEntry(request, result, responseMetadata)
 
-  def createSqsAckResult[T <: SdkPojo](messageAction: MessageAction): SqsAckResult[T] =
-    new SqsAckResult(messageAction)
+  def createDeleteResult(messageAction: MessageAction.Delete, response: DeleteMessageResponse): DeleteResult =
+    new DeleteResult(messageAction, response)
+
+  def createChangeMessageVisibilityResult(messageAction: MessageAction.ChangeMessageVisibility,
+                                          response: ChangeMessageVisibilityResponse): ChangeMessageVisibilityResult =
+    new ChangeMessageVisibilityResult(messageAction, response)
+
+  def createDeleteResultEntry(messageAction: MessageAction.Delete,
+                              result: DeleteMessageBatchResultEntry,
+                              responseMetadata: SqsResponseMetadata = EmptySqsResponseMetadata): DeleteResultEntry =
+    new DeleteResultEntry(messageAction, result, responseMetadata)
+
+  def createChangeMessageVisibilityResultEntry(
+      messageAction: MessageAction.ChangeMessageVisibility,
+      result: ChangeMessageVisibilityBatchResultEntry,
+      responseMetadata: SqsResponseMetadata = EmptySqsResponseMetadata
+  ): ChangeMessageVisibilityResultEntry =
+    new ChangeMessageVisibilityResultEntry(messageAction, result, responseMetadata)
 }
