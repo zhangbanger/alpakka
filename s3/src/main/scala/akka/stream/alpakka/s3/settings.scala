@@ -71,15 +71,15 @@ object Proxy {
 final class ForwardProxyCredentials private (val username: String, val password: String) {
 
   /** Java API */
-  def getUsername : String = username
+  def getUsername: String = username
 
   /** Java API */
-  def getPassword : String = password
+  def getPassword: String = password
 
-  def withUsername(username : String) = copy(username = username)
-  def withPassword(password : String) = copy(password = password)
+  def withUsername(username: String) = copy(username = username)
+  def withPassword(password: String) = copy(password = password)
 
-  private def copy(username : String = username, password: String = password) =
+  private def copy(username: String = username, password: String = password) =
     new ForwardProxyCredentials(username, password)
 
   override def toString =
@@ -115,26 +115,26 @@ object ForwardProxyCredentials {
 final class ForwardProxy private (val host: String, val port: Int, val credentials: Option[ForwardProxyCredentials]) {
 
   /** Java API */
-  def getHost : String = host
+  def getHost: String = host
 
   /** Java API */
-  def getPort : Int = port
+  def getPort: Int = port
 
   /** Java API */
-  def getCredentials : Option[ForwardProxyCredentials] = credentials
+  def getCredentials: Option[ForwardProxyCredentials] = credentials
 
-  def withHost(host : String) = copy(host = host)
-  def withPort(port : Int) = copy(port = port)
+  def withHost(host: String) = copy(host = host)
+  def withPort(port: Int) = copy(port = port)
   def withCredentials(credentials: ForwardProxyCredentials) = copy(credentials = Option(credentials))
 
-  private def copy(host : String = host, port : Int = port, credentials: Option[ForwardProxyCredentials] = credentials) =
+  private def copy(host: String = host, port: Int = port, credentials: Option[ForwardProxyCredentials] = credentials) =
     new ForwardProxy(host, port, credentials)
 
   override def toString =
     "ForwardProxy(" +
     s"host=$host," +
     s"port=$port," +
-    s"credentials=$credentials"
+    s"credentials=$credentials" +
   ")"
 
   override def equals(other: Any): Boolean = other match {
@@ -146,7 +146,7 @@ final class ForwardProxy private (val host: String, val port: Int, val credentia
   }
 
   override def hashCode(): Int =
-    Objects.hash(host, port, credentials)
+    Objects.hash(host, Int.box(port), credentials)
 }
 
 object ForwardProxy {
@@ -253,7 +253,7 @@ final class S3Settings private (
     s"pathStyleAccess=$pathStyleAccess," +
     s"endpointUrl=$endpointUrl," +
     s"listBucketApiVersion=$listBucketApiVersion" +
-    s"forwardProxy=$forwardProxy"
+    s"forwardProxy=$forwardProxy" +
   ")"
 
   override def equals(other: Any): Boolean = other match {
