@@ -135,7 +135,7 @@ final class ForwardProxy private (val host: String, val port: Int, val credentia
     s"host=$host," +
     s"port=$port," +
     s"credentials=$credentials" +
-  ")"
+    ")"
 
   override def equals(other: Any): Boolean = other match {
     case that: ForwardProxy =>
@@ -178,7 +178,7 @@ object ApiVersion {
 
 final class S3Settings private (
     val bufferType: BufferType,
-    val proxy: Option[Proxy],
+    @deprecated("Please use endpointUrl instead", since = "1.0.1") val proxy: Option[Proxy],
     val credentialsProvider: AWSCredentialsProvider,
     val s3RegionProvider: AwsRegionProvider,
     val pathStyleAccess: Boolean,
@@ -191,6 +191,7 @@ final class S3Settings private (
   def getBufferType: BufferType = bufferType
 
   /** Java API */
+  @deprecated("Please use endpointUrl instead", since = "1.0.1")
   def getProxy: java.util.Optional[Proxy] = proxy.asJava
 
   /** Java API */
@@ -212,7 +213,10 @@ final class S3Settings private (
   def getForwardProxy: java.util.Optional[ForwardProxy] = forwardProxy.asJava
 
   def withBufferType(value: BufferType): S3Settings = copy(bufferType = value)
-  def withProxy(value: Proxy): S3Settings = copy(proxy = Option(value))
+
+  @deprecated("Please use endpointUrl instead", since = "1.0.1")
+  def withProxy(value: Proxy): S3Settings = copy(endpointUrl = Some(s"${value.scheme}://${value.host}:${value.port}"))
+
   def withCredentialsProvider(value: AWSCredentialsProvider): S3Settings =
     copy(credentialsProvider = value)
   def withS3RegionProvider(value: AwsRegionProvider): S3Settings = copy(s3RegionProvider = value)
@@ -226,7 +230,6 @@ final class S3Settings private (
 
   private def copy(
       bufferType: BufferType = bufferType,
-      proxy: Option[Proxy] = proxy,
       credentialsProvider: AWSCredentialsProvider = credentialsProvider,
       s3RegionProvider: AwsRegionProvider = s3RegionProvider,
       pathStyleAccess: Boolean = pathStyleAccess,
@@ -235,7 +238,7 @@ final class S3Settings private (
       forwardProxy: Option[ForwardProxy] = forwardProxy
   ): S3Settings = new S3Settings(
     bufferType = bufferType,
-    proxy = proxy,
+    proxy = None,
     credentialsProvider = credentialsProvider,
     s3RegionProvider = s3RegionProvider,
     pathStyleAccess = pathStyleAccess,
@@ -247,19 +250,17 @@ final class S3Settings private (
   override def toString =
     "S3Settings(" +
     s"bufferType=$bufferType," +
-    s"proxy=$proxy," +
     s"credentialsProvider=$credentialsProvider," +
     s"s3RegionProvider=$s3RegionProvider," +
     s"pathStyleAccess=$pathStyleAccess," +
     s"endpointUrl=$endpointUrl," +
     s"listBucketApiVersion=$listBucketApiVersion" +
     s"forwardProxy=$forwardProxy" +
-  ")"
+    ")"
 
   override def equals(other: Any): Boolean = other match {
     case that: S3Settings =>
       java.util.Objects.equals(this.bufferType, that.bufferType) &&
-      Objects.equals(this.proxy, that.proxy) &&
       Objects.equals(this.credentialsProvider, that.credentialsProvider) &&
       Objects.equals(this.s3RegionProvider, that.s3RegionProvider) &&
       Objects.equals(this.pathStyleAccess, that.pathStyleAccess) &&
@@ -271,7 +272,6 @@ final class S3Settings private (
 
   override def hashCode(): Int =
     Objects.hash(bufferType,
-                 proxy,
                  credentialsProvider,
                  s3RegionProvider,
                  Boolean.box(pathStyleAccess),
@@ -316,7 +316,7 @@ object S3Settings {
       Option(c.getString("endpoint-url"))
     } else {
       None
-    }
+    }.orElse(maybeProxy.map(p => s"${p.scheme}://${p.host}:${p.port}"))
 
     val regionProvider = {
       val regionProviderPath = "aws.region.provider"
@@ -375,7 +375,7 @@ object S3Settings {
 
     new S3Settings(
       bufferType = bufferType,
-      proxy = maybeProxy,
+      proxy = None,
       credentialsProvider = credentialsProvider,
       s3RegionProvider = regionProvider,
       pathStyleAccess = pathStyleAccess,

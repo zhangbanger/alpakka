@@ -770,11 +770,6 @@ private object S3WireMockBase {
 
   private def config(proxyPort: Int) = ConfigFactory.parseString(s"""
     |${S3Settings.ConfigPath} {
-    |  proxy {
-    |    host = localhost
-    |    port = $proxyPort
-    |    secure = false
-    |  }
     |  aws {
     |    credentials {
     |      provider = static
@@ -787,6 +782,7 @@ private object S3WireMockBase {
     |    }
     |  }
     |  path-style-access = false
+    |  endpoint-url = "http://localhost:$proxyPort"
     |}
     """.stripMargin)
 }

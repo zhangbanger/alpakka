@@ -13,7 +13,7 @@ import akka.http.scaladsl.model.headers.{ByteRange, RawHeader}
 import akka.http.scaladsl.model.{HttpEntity, HttpRequest, IllegalUriException, MediaTypes}
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.s3.headers.{CannedAcl, ServerSideEncryption, StorageClass}
-import akka.stream.alpakka.s3.{ApiVersion, BufferType, MemoryBufferType, MetaHeaders, Proxy, S3Headers, S3Settings}
+import akka.stream.alpakka.s3.{ApiVersion, BufferType, MemoryBufferType, MetaHeaders, S3Headers, S3Settings}
 import akka.stream.scaladsl.Source
 import akka.testkit.{SocketUtil, TestProbe}
 import com.amazonaws.auth.{AWSCredentialsProvider, AWSStaticCredentialsProvider, AnonymousAWSCredentials}
@@ -26,7 +26,6 @@ class HttpRequestsSpec extends FlatSpec with Matchers with ScalaFutures {
   // test fixtures
   def getSettings(
       bufferType: BufferType = MemoryBufferType,
-      proxy: Option[Proxy] = None,
       awsCredentials: AWSCredentialsProvider = new AWSStaticCredentialsProvider(new AnonymousAWSCredentials()),
       s3Region: String = "us-east-1",
       pathStyleAccess: Boolean = false,
@@ -38,7 +37,7 @@ class HttpRequestsSpec extends FlatSpec with Matchers with ScalaFutures {
     }
 
     S3Settings(bufferType,
-               proxy,
+               None,
                awsCredentials,
                regionProvider,
                pathStyleAccess,
@@ -149,12 +148,14 @@ class HttpRequestsSpec extends FlatSpec with Matchers with ScalaFutures {
     req.uri.rawQueryString shouldBe empty
   }
 
-  it should "support download requests via HTTP when such scheme configured for `proxy`" in {
-    implicit val settings = getSettings(s3Region = "region", proxy = Option(Proxy("localhost", 8080, "http")))
+  it should "support download requests via configured `endpointUrl`" in {
+    implicit val settings = getSettings(s3Region = "region", endpointUrl = Option("http://localhost:8080"))
 
     val req = HttpRequests.getDownloadRequest(location)
 
     req.uri.scheme shouldEqual "http"
+    req.uri.authority.host.address shouldEqual "localhost"
+    req.uri.authority.port shouldEqual 8080
   }
 
   it should "support download requests with keys starting with /" in {
@@ -211,8 +212,8 @@ class HttpRequestsSpec extends FlatSpec with Matchers with ScalaFutures {
     }
   }
 
-  it should "support multipart init upload requests via HTTP when such scheme configured for `proxy`" in {
-    implicit val settings = getSettings(s3Region = "region", proxy = Option(Proxy("localhost", 8080, "http")))
+  it should "support multipart init upload requests via configured `endpointUrl`" in {
+    implicit val settings = getSettings(s3Region = "region", endpointUrl = Option("http://localhost:8080"))
 
     val req =
       HttpRequests.initiateMultipartUploadRequest(
@@ -222,19 +223,23 @@ class HttpRequestsSpec extends FlatSpec with Matchers with ScalaFutures {
       )
 
     req.uri.scheme shouldEqual "http"
+    req.uri.authority.host.address shouldEqual "localhost"
+    req.uri.authority.port shouldEqual 8080
   }
 
-  it should "support multipart upload part requests via HTTP when such scheme configured for `proxy`" in {
-    implicit val settings = getSettings(s3Region = "region", proxy = Option(Proxy("localhost", 8080, "http")))
+  it should "support multipart upload part requests via configured `endpointUrl`" in {
+    implicit val settings = getSettings(s3Region = "region", endpointUrl = Option("http://localhost:8080"))
 
     val req =
       HttpRequests.uploadPartRequest(multipartUpload, 1, Source.empty, 1)
 
     req.uri.scheme shouldEqual "http"
+    req.uri.authority.host.address shouldEqual "localhost"
+    req.uri.authority.port shouldEqual 8080
   }
 
   it should "properly multipart upload part request with customer keys server side encryption" in {
-    implicit val settings = getSettings(s3Region = "region", proxy = Option(Proxy("localhost", 8080, "http")))
+    implicit val settings = getSettings(s3Region = "region", pathStyleAccess = true)
     val myKey = "my-key"
     val md5Key = "md5-key"
     val s3Headers = ServerSideEncryption.customerKeys(myKey).withMd5(md5Key).headersFor(UploadPart)
@@ -245,18 +250,20 @@ class HttpRequestsSpec extends FlatSpec with Matchers with ScalaFutures {
     req.headers should contain(RawHeader("x-amz-server-side-encryption-customer-key-MD5", md5Key))
   }
 
-  it should "support multipart upload complete requests via HTTP when such scheme configured for `proxy`" in {
-    implicit val settings = getSettings(s3Region = "region", proxy = Option(Proxy("localhost", 8080, "http")))
+  it should "support multipart upload complete requests via configured `endpointUrl`" in {
+    implicit val settings = getSettings(s3Region = "region", endpointUrl = Option("http://localhost:8080"))
     implicit val executionContext = scala.concurrent.ExecutionContext.global
 
-    val reqFuture =
-      HttpRequests.completeMultipartUploadRequest(multipartUpload, (1, "part") :: Nil, Nil)
+    val req =
+      HttpRequests.completeMultipartUploadRequest(multipartUpload, (1, "part") :: Nil, Nil).futureValue
 
-    reqFuture.futureValue.uri.scheme shouldEqual "http"
+    req.uri.scheme shouldEqual "http"
+    req.uri.authority.host.address shouldEqual "localhost"
+    req.uri.authority.port shouldEqual 8080
   }
 
   it should "initiate multipart upload with AES-256 server side encryption" in {
-    implicit val settings = getSettings(s3Region = "us-east-2", proxy = Option(Proxy("localhost", 8080, "http")))
+    implicit val settings = getSettings(s3Region = "us-east-2")
     val s3Headers = ServerSideEncryption.aes256().headersFor(InitiateMultipartUpload)
     val req = HttpRequests.initiateMultipartUploadRequest(location, contentType, s3Headers)
 
