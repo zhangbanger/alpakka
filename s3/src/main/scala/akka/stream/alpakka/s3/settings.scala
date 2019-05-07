@@ -310,6 +310,17 @@ object S3Settings {
       )
     }
 
+    val maybeForwardProxy = if (c.hasPath("forward-proxy")) {
+      val maybeCredentials = if (c.hasPath("forward-proxy.credentials")) {
+        Option(
+          ForwardProxyCredentials(c.getString("forward-proxy.credentials.username"),
+                                  c.getString("forward-proxy.credentials.password"))
+        )
+      } else None
+
+      Option(ForwardProxy(c.getString("forward-proxy.host"), c.getInt("forward-proxy.port"), maybeCredentials))
+    } else None
+
     val pathStyleAccess = c.getBoolean("path-style-access")
 
     val endpointUrl = if (c.hasPath("endpoint-url")) {
@@ -381,7 +392,7 @@ object S3Settings {
       pathStyleAccess = pathStyleAccess,
       endpointUrl = endpointUrl,
       listBucketApiVersion = apiVersion,
-      forwardProxy = None // TODO: load from config, see akka.http.client.proxy from https://doc.akka.io/docs/akka-http/current/client-side/client-transport.html
+      forwardProxy = maybeForwardProxy
     )
   }
 
