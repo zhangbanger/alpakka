@@ -4,7 +4,7 @@
 
 package docs.scaladsl
 
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.{CompletableFuture, TimeUnit}
 import java.util.function.Supplier
 
 import akka.Done
@@ -37,7 +37,7 @@ class SqsAckSpec extends FlatSpec with Matchers with DefaultTestContext {
           .messageBody(message)
           .build()
 
-      awsSqsClient.sendMessage(request).get()
+      awsSqsClient.sendMessage(request).get(2, TimeUnit.SECONDS)
     }
 
     def sendMessages(messages: Seq[String]): Unit = {
@@ -57,7 +57,7 @@ class SqsAckSpec extends FlatSpec with Matchers with DefaultTestContext {
           .entries(entries.asJava)
           .build()
 
-      awsSqsClient.sendMessageBatch(batch).get()
+      awsSqsClient.sendMessageBatch(batch).get(2, TimeUnit.SECONDS)
     }
   }
 

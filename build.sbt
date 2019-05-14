@@ -103,6 +103,11 @@ lazy val couchbase =
 
 lazy val csv = alpakkaProject("csv", "csv", Dependencies.Csv, whitesourceGroup := Whitesource.Group.Supported)
 
+lazy val csvBench = alpakkaProject("csv-bench", "csvBench", publish / skip := true)
+  .dependsOn(csv)
+  .enablePlugins(JmhPlugin)
+  .disablePlugins(BintrayPlugin, MimaPlugin)
+
 lazy val dynamodb = alpakkaProject("dynamodb", "aws.dynamodb", Dependencies.DynamoDB)
 
 lazy val elasticsearch = alpakkaProject(
@@ -235,8 +240,7 @@ lazy val sns = alpakkaProject(
   "aws.sns",
   Dependencies.Sns,
   // For mockito https://github.com/akka/alpakka/issues/390
-  parallelExecution in Test := false,
-  crossScalaVersions -= Dependencies.Scala213
+  parallelExecution in Test := false
 )
 
 lazy val solr = alpakkaProject("solr", "solr", Dependencies.Solr, parallelExecution in Test := false)
@@ -246,8 +250,7 @@ lazy val sqs = alpakkaProject(
   "aws.sqs",
   Dependencies.Sqs,
   // For mockito https://github.com/akka/alpakka/issues/390
-  parallelExecution in Test := false,
-  crossScalaVersions -= Dependencies.Scala213
+  parallelExecution in Test := false
 )
 
 lazy val sse = alpakkaProject("sse", "sse", Dependencies.Sse)

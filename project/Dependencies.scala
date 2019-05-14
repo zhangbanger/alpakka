@@ -10,12 +10,14 @@ object Dependencies {
 
   val AkkaVersion = sys.env.get("AKKA_SERIES") match {
     case Some("2.4") => sys.error("Akka 2.4 is not supported anymore")
-    case _ => "2.5.21"
+    case _ => "2.5.22"
   }
 
   val AwsSdkVersion = "1.11.476"
-  val AwsSdk2Version = "2.5.20"
+  val AwsSdk2Version = "2.5.41"
+  val AwsSpiAkkaHttpVersion = "0.0.6"
   val AkkaHttpVersion = "10.1.7"
+  val mockitoVersion = "2.27.0"
 
   val CouchbaseVersion = "2.7.2"
   val CouchbaseVersionForDocs = "2.7"
@@ -53,7 +55,7 @@ object Dependencies {
   val AwsLambda = Seq(
     libraryDependencies ++= Seq(
       "software.amazon.awssdk" % "lambda" % AwsSdk2Version, // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test // MIT
     )
   )
 
@@ -93,7 +95,7 @@ object Dependencies {
       "com.typesafe.akka" %% "akka-http-xml" % AkkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
       // https://github.com/akka/alpakka-kafka/releases
-      "com.typesafe.akka" %% "akka-stream-kafka" % "1.0.1",
+      "com.typesafe.akka" %% "akka-stream-kafka" % "1.0.3",
       // https://github.com/embeddedkafka/embedded-kafka/releases
       "io.github.embeddedkafka" %% "embedded-kafka" % "2.1.1", // MIT
       // https://github.com/javaee/javax.jms
@@ -148,12 +150,7 @@ object Dependencies {
   val Ftp = Seq(
     libraryDependencies ++= Seq(
       "commons-net" % "commons-net" % "3.6", // ApacheV2
-      "com.hierynomus" % "sshj" % "0.26.0", // ApacheV2
-      "org.apache.ftpserver" % "ftpserver-core" % "1.1.1" % Test, // ApacheV2
-      "org.apache.sshd" % "sshd-scp" % "2.1.0" % Test, // ApacheV2
-      "org.apache.sshd" % "sshd-sftp" % "2.1.0" % Test, // ApacheV2
-      "net.i2p.crypto" % "eddsa" % "0.3.0" % Test, // CC0 1.0 Universal
-      "com.google.jimfs" % "jimfs" % "1.1" % Test // ApacheV2
+      "com.hierynomus" % "sshj" % "0.26.0" // ApacheV2
     )
   )
 
@@ -178,7 +175,7 @@ object Dependencies {
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
       "com.pauldijou" %% "jwt-core" % "2.1.0", // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test, // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test, // MIT
       "com.github.tomakehurst" % "wiremock" % "2.18.0" % Test // ApacheV2
     )
   )
@@ -186,7 +183,7 @@ object Dependencies {
   val GooglePubSubGrpc = Seq(
     libraryDependencies ++= Seq(
       "com.google.api.grpc" % "grpc-google-cloud-pubsub-v1" % "0.12.0" % "protobuf", // ApacheV2
-      "io.grpc" % "grpc-auth" % "1.16.1", // ApacheV2
+      "io.grpc" % "grpc-auth" % "1.20.0", // ApacheV2
       "com.google.auth" % "google-auth-library-oauth2-http" % "0.15.0" // BSD 3-clause
     ) ++ Silencer
   )
@@ -198,7 +195,7 @@ object Dependencies {
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion,
       "com.pauldijou" %% "jwt-core" % "2.1.0", // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test // MIT
     )
   )
 
@@ -245,7 +242,7 @@ object Dependencies {
       "org.apache.activemq" % "activemq-broker" % "5.15.4" % Test, // ApacheV2
       "org.apache.activemq" % "activemq-client" % "5.15.4" % Test, // ApacheV2
       "io.github.sullis" %% "jms-testkit" % "0.2.1" % Test, // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test // MIT
     ),
     // Having JBoss as a first resolver is a workaround for https://github.com/coursier/coursier/issues/200
     externalResolvers := ("jboss" at "http://repository.jboss.org/nexus/content/groups/public") +: externalResolvers.value
@@ -261,7 +258,7 @@ object Dependencies {
   val Kinesis = Seq(
     libraryDependencies ++= Seq(
       "com.amazonaws" % "aws-java-sdk-kinesis" % AwsSdkVersion, // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test // MIT
     )
   )
 
@@ -344,7 +341,7 @@ object Dependencies {
 
   val Sns = Seq(
     libraryDependencies ++= Seq(
-      "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.4" excludeAll ExclusionRule(
+      "com.github.matsluni" %% "aws-spi-akka-http" % AwsSpiAkkaHttpVersion excludeAll ExclusionRule(
         organization = "com.typesafe.akka"
       ), // ApacheV2
       "software.amazon.awssdk" % "sns" % AwsSdk2Version excludeAll (ExclusionRule(
@@ -352,7 +349,7 @@ object Dependencies {
         name = "netty-nio-client"
       ), ExclusionRule(organization = "io.netty")), // ApacheV2
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion, // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test // MIT
     )
   )
 
@@ -373,7 +370,7 @@ object Dependencies {
 
   val Sqs = Seq(
     libraryDependencies ++= Seq(
-      "com.github.matsluni" %% "aws-spi-akka-http" % "0.0.4" excludeAll ExclusionRule(
+      "com.github.matsluni" %% "aws-spi-akka-http" % AwsSpiAkkaHttpVersion excludeAll ExclusionRule(
         organization = "com.typesafe.akka"
       ), // ApacheV2
       "software.amazon.awssdk" % "sqs" % AwsSdk2Version excludeAll (ExclusionRule(
@@ -381,8 +378,8 @@ object Dependencies {
         name = "netty-nio-client"
       ), ExclusionRule(organization = "io.netty")), // ApacheV2
       "com.typesafe.akka" %% "akka-http" % AkkaHttpVersion, // ApacheV2
-      "org.mockito" % "mockito-core" % "2.23.4" % Test, // MIT
-      "org.mockito" % "mockito-inline" % "2.23.4" % Test // MIT
+      "org.mockito" % "mockito-core" % mockitoVersion % Test, // MIT
+      "org.mockito" % "mockito-inline" % mockitoVersion % Test // MIT
     )
   )
 

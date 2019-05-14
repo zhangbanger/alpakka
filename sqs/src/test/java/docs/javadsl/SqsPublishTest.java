@@ -72,7 +72,7 @@ public class SqsPublishTest extends BaseSqsTest {
     List<Message> messages =
         sqsClient
             .receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
     assertEquals(1, messages.size());
     assertEquals("alpakka", messages.get(0).body());
@@ -97,7 +97,7 @@ public class SqsPublishTest extends BaseSqsTest {
     List<Message> messages =
         sqsClient
             .receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
     assertEquals(1, messages.size());
     assertEquals("alpakka", messages.get(0).body());
@@ -121,7 +121,7 @@ public class SqsPublishTest extends BaseSqsTest {
     List<Message> messages =
         sqsClient
             .receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
     assertEquals(1, messages.size());
     assertEquals("alpakka", messages.get(0).body());
@@ -145,7 +145,7 @@ public class SqsPublishTest extends BaseSqsTest {
     List<Message> messages =
         sqsClient
             .receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
     assertEquals(1, messages.size());
     assertEquals("alpakka-flow", messages.get(0).body());
@@ -169,7 +169,7 @@ public class SqsPublishTest extends BaseSqsTest {
     List<Message> messages =
         sqsClient
             .receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
     assertEquals(1, messages.size());
     assertEquals("alpakka-flow", messages.get(0).body());
@@ -197,14 +197,14 @@ public class SqsPublishTest extends BaseSqsTest {
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(10).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     List<Message> messagesSecondBatch =
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(10).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     assertEquals(20, messagesFirstBatch.size() + messagesSecondBatch.size());
@@ -233,7 +233,7 @@ public class SqsPublishTest extends BaseSqsTest {
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(10).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     assertEquals(10, messagesFirstBatch.size());
@@ -264,7 +264,7 @@ public class SqsPublishTest extends BaseSqsTest {
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(10).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     assertEquals(10, messagesFirstBatch.size());
@@ -298,7 +298,7 @@ public class SqsPublishTest extends BaseSqsTest {
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(10).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     assertEquals(10, messagesFirstBatch.size());
@@ -336,7 +336,7 @@ public class SqsPublishTest extends BaseSqsTest {
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(10).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     assertEquals(10, messagesFirstBatch.size());
@@ -358,7 +358,7 @@ public class SqsPublishTest extends BaseSqsTest {
         sqsClient
             .receiveMessage(
                 ReceiveMessageRequest.builder().maxNumberOfMessages(1).queueUrl(queueUrl).build())
-            .get()
+            .get(2, TimeUnit.SECONDS)
             .messages();
 
     assertEquals(1, messages.size());
