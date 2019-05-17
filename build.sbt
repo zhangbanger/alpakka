@@ -79,6 +79,14 @@ lazy val alpakka = project
     crossScalaVersions := List() // workaround for https://github.com/sbt/sbt/issues/3465
   )
 
+lazy val whitesourceSupported = project
+  .in(file("tmp"))
+  .settings(whitesourceGroup := Whitesource.Group.Supported)
+  .aggregate(
+    couchbase,
+    csv,
+  )
+
 lazy val amqp = alpakkaProject("amqp", "amqp", Dependencies.Amqp)
 
 lazy val avroparquet =
