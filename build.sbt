@@ -84,7 +84,8 @@ lazy val alpakka = project
     ScalaUnidoc / unidoc / unidocProjectFilter := inAnyProject -- inProjects(`doc-examples`,
                                                                              csvBench,
                                                                              mqttStreamingBench),
-    crossScalaVersions := List() // workaround for https://github.com/sbt/sbt/issues/3465
+    crossScalaVersions := List(), // workaround for https://github.com/sbt/sbt/issues/3465
+    sonatypeProfileName := "com.lightbend"
   )
 
 TaskKey[Unit]("verifyCodeFmt") := {
