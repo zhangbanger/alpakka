@@ -17,7 +17,7 @@ object Dependencies {
   val AwsSdk2Version = "2.11.14"
   val AwsSpiAkkaHttpVersion = "0.0.11"
   // Sync with plugins.sbt
-  val AkkaGrpcBinaryVersion = "1.0"
+  val AkkaGrpcBinaryVersion = "2.1.1"
   val AkkaHttp101 = "10.1.11"
   val AkkaHttp102 = "10.2.0"
   val AkkaHttp1024 = "10.2.4"
